@@ -1,0 +1,117 @@
+-- = MOSTRAR TODO
+DELIMITER $$
+
+CREATE PROCEDURE PROC_SEGURIDAD_LIST () 
+BEGIN
+  SELECT 
+    SE.ID_SEGURIDAD,
+    SE.ID_PERSONA,
+    PE.NOMBRES,
+    PE.APPATERNO,
+    PE.APMATERNO,
+    PE.DOCUMENTO,
+    PE.CODIGO,
+    SE.ESTADO
+  FROM
+    SEGURIDAD SE
+    INNER JOIN PERSONA PE 
+      ON PE.ID_PERSONA = SE.ID_PERSONA 
+  ORDER BY SE.ID_SEGURIDAD ASC; -- ASC para ordenar de menor a mayor
+
+END $$
+
+DELIMITER ;
+
+
+-- = CREAR O MODIFICAR
+DELIMITER $$
+
+CREATE PROCEDURE PROC_SEGURIDAD_CU(
+    IN _ID_SEGURIDAD INT,
+    IN _NOMBRES VARCHAR(100),
+    IN _APPATERNO VARCHAR(100),
+    IN _APMATERNO VARCHAR(100),
+    IN _DOCUMENTO CHAR(8),
+    IN _CODIGO VARCHAR(9)
+)
+BEGIN
+    DECLARE __ICON VARCHAR(10) DEFAULT 'error';
+    DECLARE __MESSAGE_TEXT VARCHAR(300) DEFAULT 'HA OCURRIDO UN ERROR';
+    DECLARE __STATUS_CODE CHAR(3) DEFAULT '501';
+
+    -- Variable para almacenar el ID de la persona creada o encontrada
+    DECLARE _ID_PERSONA INT;
+
+    -- Verificar si la persona existe
+    SELECT ID_PERSONA INTO _ID_PERSONA FROM persona WHERE DOCUMENTO = _DOCUMENTO;
+
+    IF _ID_PERSONA IS NULL THEN
+        -- Crear una nueva persona si no existe
+        INSERT INTO persona (NOMBRES, APPATERNO, APMATERNO, DOCUMENTO, CODIGO, ESTADO)
+        VALUES (_NOMBRES, _APPATERNO, _APMATERNO, _DOCUMENTO, _CODIGO, '1');
+
+        -- Obtener el ID de la persona recién creada
+        SELECT LAST_INSERT_ID() INTO _ID_PERSONA;
+    END IF;
+
+    -- Crear o actualizar el registro de seguridad
+    IF _ID_SEGURIDAD = 0 THEN
+        -- Crear un nuevo registro de seguridad
+        INSERT INTO seguridad (ID_PERSONA, ESTADO)
+        VALUES (_ID_PERSONA, '1');
+
+        SET __ICON = 'success';
+        SET __MESSAGE_TEXT = 'Registro de seguridad creado exitosamente';
+        SET __STATUS_CODE = '201';
+    ELSE
+        -- Actualizar el registro de seguridad existente
+        UPDATE seguridad
+        SET ID_PERSONA = _ID_PERSONA
+        WHERE ID_SEGURIDAD = _ID_SEGURIDAD;
+
+        SET __ICON = 'success';
+        SET __MESSAGE_TEXT = 'Registro de seguridad actualizado exitosamente';
+        SET __STATUS_CODE = '202';
+    END IF;
+
+    -- Devolver resultados
+    SELECT __ICON AS 'ICON', __MESSAGE_TEXT AS 'MESSAGE_TEXT', __STATUS_CODE AS 'STATUS_CODE';
+END $$
+
+DELIMITER ;
+
+
+
+-- = ELIMINAR SEGURIDAD
+DELIMITER $$
+CREATE PROCEDURE PROC_SEGURIDAD_DELETE(
+    _ID_SEGURIDAD INT
+) BEGIN
+    -- MENSAJES A LA INTERFAZ
+    DECLARE __ICON VARCHAR(10) DEFAULT 'error';
+    DECLARE __MESSAGE_TEXT VARCHAR(300) DEFAULT 'HA OCURRIDO UN ERROR';
+    DECLARE __STATUS_CODE CHAR(3) DEFAULT '501';
+
+    -- SABER SI NO SE ENCUENTRA O YA ESTA ELIMINADO
+    DECLARE __NO_EXISTS INT DEFAULT 0;
+
+    SELECT IF(ESTADO <> 0, ID_SEGURIDAD, 0) INTO __NO_EXISTS FROM SEGURIDAD
+    WHERE ID_SEGURIDAD = _ID_SEGURIDAD;
+
+    IF __NO_EXISTS = 0 THEN 
+        -- MENSAJE
+        SET __ICON = 'warning';
+        SET __MESSAGE_TEXT = 'EL ELEMENTO NO EXISTE O YA HA SIDO ELIMINADO';
+        SET __STATUS_CODE = '200';
+    ELSE
+        UPDATE SEGURIDAD
+            SET ESTADO = '0'
+            WHERE ID_SEGURIDAD = _ID_SEGURIDAD;
+        -- MENSAJE
+            SET __ICON = 'success';
+            SET __MESSAGE_TEXT = 'ELEMENTO ELIMINADO';
+            SET __STATUS_CODE = '202';
+    END IF;
+    SELECT __ICON AS 'ICON', __MESSAGE_TEXT AS 'MESSAGE_TEXT', __STATUS_CODE AS 'STATUS_CODE';
+END $$
+DELIMITER ;

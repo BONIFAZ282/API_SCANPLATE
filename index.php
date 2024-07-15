@@ -23,7 +23,7 @@ require './Controller/CategoriaController.php';
 require './Controller/TipoVehiculoController.php';
 require './Controller/SeguridadController.php';
 require './Controller/CocheraController.php';
-
+require './Controller/CuerpoEducativoController.php';
 
 
 // |||||||||||||| DATABASE ||||||||||||||||||||||||
@@ -59,6 +59,14 @@ Flight::route('POST /usuario/actualizar', array($usuarioController, "ACTUALIZAR_
 Flight::route('POST /usuario/natural', array($usuarioController, "CREAR_USUARIO_NATURAL"));
 Flight::route('POST /usuario/delete', array($usuarioController, "ELIMINAR_USUARIO"));
 Flight::route('POST /usuario/eliminar_definitivo', array($usuarioController, "ELIMINAR_USUARIO_DEFINITIVO"));
+
+
+$educativoController = new CuerpoEducativoController();
+
+Flight::route('POST /cuerpo_educativo/crear', array($educativoController, "CREAR_CUERPO_EDUCATIVO"));
+Flight::route('POST /cuerpo_educativo/actualizar', array($educativoController, "ACTUALIZAR_CUERPO_EDUCATIVO"));
+Flight::route('POST /cuerpo_educativo/eliminar', array($educativoController, "ELIMINAR_CUERPO_EDUCATIVO"));
+Flight::route('GET /cuerpo_educativo/list', array($educativoController, "LISTAR_CUERPO_EDUCATIVO"));
 
 
 
